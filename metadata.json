@@ -1,0 +1,6 @@
+{
+  "name": "Shadow Escape: The Last Survivor",
+  "description": "A 3D futuristic neon-city endless runner and monster escape game with 5 progressive stages, interactive tutorial, power-ups, and responsive touch and keyboard controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
