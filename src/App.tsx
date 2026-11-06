@@ -4,6 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
 import {
   ArrowDown,
   ArrowLeft,
@@ -171,6 +172,36 @@ export default function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [gameMode, showUpgradesModal, selectedStageId, handleStartGame, handleToggleMute]);
+
+  // Native Android Hardware Back Button & App Background Lifecycle Handling
+  useEffect(() => {
+    const backListenerPromise = CapacitorApp.addListener('backButton', () => {
+      if (showUpgradesModal) {
+        setShowUpgradesModal(false);
+      } else if (gameMode === 'playing' || gameMode === 'tutorial') {
+        handleTogglePause();
+      } else if (gameMode === 'paused' || gameMode === 'gameover') {
+        soundEngine.stopMusic();
+        setGameMode('title');
+      } else {
+        CapacitorApp.exitApp();
+      }
+    });
+
+    const stateListenerPromise = CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive) {
+        soundEngine.stopMusic();
+        if (gameMode === 'playing' || gameMode === 'tutorial') {
+          setGameMode('paused');
+        }
+      }
+    });
+
+    return () => {
+      backListenerPromise.then((h) => h.remove()).catch(() => {});
+      stateListenerPromise.then((h) => h.remove()).catch(() => {});
+    };
+  }, [gameMode, showUpgradesModal, handleTogglePause]);
 
   // Upgrade purchase handler
   const handleUpgrade = (key: keyof PersistentSaveData['upgrades'], costCoins: number) => {

@@ -1,8 +1,18 @@
 node_modules/
-build/
-dist/
+/build/
+/dist/
 coverage/
 .DS_Store
 *.log
 .env*
 !.env.example
+
+# Android / Gradle generated build artifacts (keep android/ source & gradle wrapper tracked)
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/.idea/
+*.iml
+

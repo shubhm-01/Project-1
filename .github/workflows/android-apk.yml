@@ -1,0 +1,73 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-android-apk:
+    name: Assemble Debug Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Latest Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NPM Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci || npm install
+          else
+            npm install
+          fi
+
+      - name: Build Production Web Bundle
+        run: npm run build
+
+      - name: Sync Capacitor Android Project
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x android/gradlew
+
+      - name: Build Debug APK with Gradle (assembleDebug)
+        working-directory: ./android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK Output Exists
+        run: |
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Installable Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shadow-Escape-Android-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
